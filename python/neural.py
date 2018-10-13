@@ -34,10 +34,9 @@ class NeuralNet:
 		self.momentum = momentum
 		self.hnodes = hnodes
 
-	def run(self, data, train_fraction = 0.6, epochs = 500, batch_count = 3):
+	def train(self, data, epochs = 500, batch_count = 3):
 		# Start the session
 		cost0, fails = 1e9, 0
-		data.select(int(data.count*train_fraction))
 		with tf.Session() as sess:
 		# Initialize the variables
 			sess.run(self.init_op)
@@ -59,6 +58,13 @@ class NeuralNet:
 					fails = 0
 				print("Epoch: {}, cost = {:.9f}".format((epoch + 1), avg_cost))
 			self.saver.save(sess, p2_nn_model)
+			print('Training completed.')
+			self.epochs = epochs
+		return True # Training was successful
+
+	def test(self, data):
+		with tf.Session() as sess:
+			self.saver.restore(sess, p2_nn_model)
 			train_acc = sess.run(self.accuracy, feed_dict={self.x: data.train.features, self.y: data.train.labels})
 			# Print results
 			test_acc = sess.run(self.accuracy, feed_dict={self.x: data.test.features, self.y: data.test.labels})
@@ -67,5 +73,5 @@ class NeuralNet:
 		# Store the results in a text file
 		with open(p2_experiment, 'a+') as file:
 			file.write('{}  {:.4f}\t{:.4f}\t{:.2f}\t{:.2f}\t{}\n'\
-				.format(epochs, self.learning_rate, self.momentum, train_acc*100, test_acc*100, self.hnodes))
-		return True # Training was successful
+				.format(self.epochs, self.learning_rate, self.momentum, train_acc*100, test_acc*100, self.hnodes))
+		
